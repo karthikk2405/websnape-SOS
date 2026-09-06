@@ -201,6 +201,16 @@ const DataStore = (() => {
     return getOrders().filter(o => o.status !== 'served' && o.status !== 'cancelled');
   }
 
+  // BroadcastChannel for cross-tab real-time sync
+  const orderChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('sos_order_channel') : null;
+
+  function notifyOrderChange(type, data) {
+    if (orderChannel) {
+      try { orderChannel.postMessage({ type, data, timestamp: Date.now() }); } catch (e) {}
+    }
+    window.dispatchEvent(new CustomEvent('sos_order_update', { detail: { type, data } }));
+  }
+
   function placeOrder(tableNumber, items, notes = '') {
     const orders = getOrders();
     const order = {
@@ -215,6 +225,7 @@ const DataStore = (() => {
     };
     orders.push(order);
     localStorage.setItem(KEYS.ORDERS, JSON.stringify(orders));
+    notifyOrderChange('order_placed', order);
     return order;
   }
 
@@ -225,12 +236,14 @@ const DataStore = (() => {
       orders[idx].status = status;
       orders[idx].updatedAt = new Date().toISOString();
       localStorage.setItem(KEYS.ORDERS, JSON.stringify(orders));
+      notifyOrderChange('status_changed', { orderId, status });
     }
   }
 
   function clearServedOrders() {
     const orders = getOrders().filter(o => o.status !== 'served' && o.status !== 'cancelled');
     localStorage.setItem(KEYS.ORDERS, JSON.stringify(orders));
+    notifyOrderChange('orders_cleared', {});
   }
 
   // ── Admin Auth ──

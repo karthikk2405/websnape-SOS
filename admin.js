@@ -116,7 +116,72 @@ const AdminView = (() => {
     });
 
     renderTab();
+    updateOrderBadgeOnly();
     startAutoRefresh();
+    setupLiveListeners();
+  }
+
+  function updateOrderBadgeOnly() {
+    const badge = document.getElementById('orderCountBadge');
+    if (badge) {
+      const activeOrders = DataStore.getActiveOrders();
+      badge.textContent = activeOrders.length;
+      badge.style.display = activeOrders.length > 0 ? 'inline-flex' : 'none';
+    }
+  }
+
+  let liveChannel = null;
+  let liveStorageHandler = null;
+  let liveCustomHandler = null;
+
+  function handleLiveUpdate() {
+    updateOrderBadgeOnly();
+    const main = document.getElementById('adminMain');
+    if (main && currentTab === 'orders') {
+      renderOrdersTab();
+    }
+  }
+
+  function setupLiveListeners() {
+    // Teardown any previous listeners
+    teardownLiveListeners();
+
+    // 1. BroadcastChannel (fastest across same-origin tabs/windows)
+    if (typeof BroadcastChannel !== 'undefined') {
+      liveChannel = new BroadcastChannel('sos_order_channel');
+      liveChannel.onmessage = (e) => {
+        handleLiveUpdate();
+      };
+    }
+
+    // 2. Storage event (fires in other tabs when localStorage changes)
+    liveStorageHandler = (e) => {
+      if (e.key === 'sos_orders' || e.key === null) {
+        handleLiveUpdate();
+      }
+    };
+    window.addEventListener('storage', liveStorageHandler);
+
+    // 3. Custom event (fires in the same tab / window)
+    liveCustomHandler = (e) => {
+      handleLiveUpdate();
+    };
+    window.addEventListener('sos_order_update', liveCustomHandler);
+  }
+
+  function teardownLiveListeners() {
+    if (liveChannel) {
+      try { liveChannel.close(); } catch (e) {}
+      liveChannel = null;
+    }
+    if (liveStorageHandler) {
+      window.removeEventListener('storage', liveStorageHandler);
+      liveStorageHandler = null;
+    }
+    if (liveCustomHandler) {
+      window.removeEventListener('sos_order_update', liveCustomHandler);
+      liveCustomHandler = null;
+    }
   }
 
   function startAutoRefresh() {
@@ -125,10 +190,12 @@ const AdminView = (() => {
       const main = document.getElementById('adminMain');
       if (main && currentTab === 'orders') {
         renderOrdersTab();
+      } else if (main) {
+        updateOrderBadgeOnly();
       } else if (!main) {
         cleanup();
       }
-    }, 5000);
+    }, 3000);
   }
 
   function cleanup() {
@@ -136,6 +203,7 @@ const AdminView = (() => {
       clearInterval(refreshInterval);
       refreshInterval = null;
     }
+    teardownLiveListeners();
   }
 
   function renderTab() {
@@ -612,8 +680,11 @@ const AdminView = (() => {
 
     document.getElementById('clearAllOrdersBtn').addEventListener('click', () => {
       if (confirm('Are you sure? This will delete ALL order history permanently.')) {
+        DataStore.clearServedOrders();
         localStorage.setItem('sos_orders', JSON.stringify([]));
+        window.dispatchEvent(new CustomEvent('sos_order_update', { detail: { type: 'orders_cleared' } }));
         alert('All orders cleared.');
+        updateOrderBadgeOnly();
       }
     });
   }
