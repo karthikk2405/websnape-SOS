@@ -24,7 +24,6 @@ const QRGenerator = (() => {
       <div class="qr-card">
         <div class="qr-image">${svgStr}</div>
         <div class="qr-label">Table ${tableNumber}</div>
-        <div class="qr-url">${url}</div>
       </div>
     `;
   }
@@ -39,7 +38,6 @@ const QRGenerator = (() => {
       card.innerHTML = `
         <div class="qr-image">${svgStr}</div>
         <div class="qr-label">Table ${i}</div>
-        <div class="qr-url-small">${url}</div>
       `;
       containerEl.appendChild(card);
     }

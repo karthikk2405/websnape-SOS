@@ -117,15 +117,16 @@ const DataStore = (() => {
   const DEFAULT_ADMIN = { username: 'websnape@admin.com', password: 'PNM@2026' };
   const DEFAULT_TABLE_COUNT = 10;
 
-  // ── Version for cache-busting when menu/creds change ──
-  const DATA_VERSION = 'v3';
+  // ── Version for cache-busting when menu/creds/tables change ──
+  const DATA_VERSION = 'v4';
 
   // ── Init ──
   function init() {
-    // Force refresh if data version changed (e.g., menu or creds updated in code)
+    // Force refresh if data version changed
     if (localStorage.getItem('sos_data_version') !== DATA_VERSION) {
       localStorage.setItem(KEYS.MENU, JSON.stringify(DEFAULT_MENU));
       localStorage.setItem(KEYS.ADMIN, JSON.stringify(DEFAULT_ADMIN));
+      localStorage.setItem(KEYS.TABLE_COUNT, JSON.stringify(DEFAULT_TABLE_COUNT));
       localStorage.setItem('sos_data_version', DATA_VERSION);
     }
     if (!localStorage.getItem(KEYS.MENU)) {
