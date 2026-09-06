@@ -274,6 +274,23 @@ const DataStore = (() => {
     getOrders, getOrdersByTable, getActiveOrders, placeOrder, updateOrderStatus, clearServedOrders,
     validateAdmin, updateAdminCreds, isAdminLoggedIn, loginAdmin, logoutAdmin,
     getTableCount, setTableCount,
+    getCart(tableNumber) {
+      try {
+        return JSON.parse(localStorage.getItem('sos_cart_table_' + tableNumber)) || [];
+      } catch (e) {
+        return [];
+      }
+    },
+    saveCart(tableNumber, cartItems) {
+      try {
+        localStorage.setItem('sos_cart_table_' + tableNumber, JSON.stringify(cartItems));
+      } catch (e) {}
+    },
+    clearCart(tableNumber) {
+      try {
+        localStorage.removeItem('sos_cart_table_' + tableNumber);
+      } catch (e) {}
+    },
   };
 })();
 
