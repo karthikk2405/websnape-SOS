@@ -118,7 +118,7 @@ const DataStore = (() => {
   const DEFAULT_TABLE_COUNT = 10;
 
   // ── Version for cache-busting when menu/creds/tables change ──
-  const DATA_VERSION = 'v4';
+  const DATA_VERSION = 'v5';
 
   // ── Init ──
   function init() {
@@ -189,6 +189,37 @@ const DataStore = (() => {
   }
 
   // ── Orders ──
+  // ── Global Storage Sync (kvdb.io) ──
+  const KV_BUCKET = 'WPjemknSfbbCzSP8rPU1hc';
+  const KV_URL = `https://kvdb.io/${KV_BUCKET}/orders`;
+
+  async function syncOrdersFromRemote() {
+    try {
+      const res = await fetch(KV_URL);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          const localStr = localStorage.getItem(KEYS.ORDERS);
+          if (localStr !== JSON.stringify(data)) {
+            localStorage.setItem(KEYS.ORDERS, JSON.stringify(data));
+            notifyOrderChange('remote_sync', {});
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  async function syncOrdersToRemote() {
+    try {
+      const orders = localStorage.getItem(KEYS.ORDERS) || '[]';
+      await fetch(KV_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: orders
+      });
+    } catch (e) {}
+  }
+
   function getOrders() {
     return JSON.parse(localStorage.getItem(KEYS.ORDERS)) || [];
   }
@@ -225,6 +256,7 @@ const DataStore = (() => {
     };
     orders.push(order);
     localStorage.setItem(KEYS.ORDERS, JSON.stringify(orders));
+    syncOrdersToRemote();
     notifyOrderChange('order_placed', order);
     return order;
   }
@@ -236,6 +268,7 @@ const DataStore = (() => {
       orders[idx].status = status;
       orders[idx].updatedAt = new Date().toISOString();
       localStorage.setItem(KEYS.ORDERS, JSON.stringify(orders));
+      syncOrdersToRemote();
       notifyOrderChange('status_changed', { orderId, status });
     }
   }
@@ -243,6 +276,7 @@ const DataStore = (() => {
   function clearServedOrders() {
     const orders = getOrders().filter(o => o.status !== 'served' && o.status !== 'cancelled');
     localStorage.setItem(KEYS.ORDERS, JSON.stringify(orders));
+    syncOrdersToRemote();
     notifyOrderChange('orders_cleared', {});
   }
 
@@ -283,6 +317,7 @@ const DataStore = (() => {
 
   return {
     init,
+    syncOrdersFromRemote,
     getMenu, getMenuByCategory, getMenuItem, saveMenu, addMenuItem, updateMenuItem, deleteMenuItem,
     getOrders, getOrdersByTable, getActiveOrders, placeOrder, updateOrderStatus, clearServedOrders,
     validateAdmin, updateAdminCreds, isAdminLoggedIn, loginAdmin, logoutAdmin,
@@ -308,3 +343,4 @@ const DataStore = (() => {
 })();
 
 DataStore.init();
+DataStore.syncOrdersFromRemote();

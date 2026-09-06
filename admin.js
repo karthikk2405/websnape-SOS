@@ -186,7 +186,10 @@ const AdminView = (() => {
 
   function startAutoRefresh() {
     if (refreshInterval) clearInterval(refreshInterval);
-    refreshInterval = setInterval(() => {
+    refreshInterval = setInterval(async () => {
+      // Sync from remote store
+      await DataStore.syncOrdersFromRemote();
+      
       const main = document.getElementById('adminMain');
       if (main && currentTab === 'orders') {
         renderOrdersTab();
