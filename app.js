@@ -21,6 +21,8 @@ const Router = (() => {
 
   function renderHome() {
     const app = document.getElementById('app');
+    const tableCount = DataStore.getTableCount();
+    
     app.innerHTML = `
       <div class="home-container">
         <div class="home-content">
@@ -28,19 +30,77 @@ const Router = (() => {
           <h1 class="home-title">SOS Dine</h1>
           <p class="home-subtitle">Smart Ordering System</p>
           <div class="home-divider"></div>
-          <div class="home-qr-prompt">
-            <div class="scan-icon">📱</div>
-            <p class="home-desc">Please scan the <strong>QR code</strong> on your table to view our menu and place your order.</p>
+          
+          <div id="homeInitialState">
+            <p class="home-desc">Welcome to SOS Dine. Tap below to select your table and order.</p>
+            <button class="btn-primary" id="homeOrderBtn" style="font-size: 1.2rem; padding: 12px 32px;">Order</button>
           </div>
+
+          <div id="homeTableSelection" style="display:none; margin-top: 24px;">
+            <p class="home-desc">Select your table number to view menu</p>
+            <div class="table-grid">
+              ${Array.from({length: tableCount}, (_, i) => i + 1).map(num => `
+                <button class="table-select-btn" data-table="${num}">${num}</button>
+              `).join('')}
+            </div>
+          </div>
+
           <div class="home-admin-link">
             <a href="#/admin" class="btn-secondary home-btn">Admin Panel</a>
           </div>
         </div>
-        <div class="home-particles">
-          ${Array.from({length: 20}, (_, i) => `<div class="particle" style="--i:${i}"></div>`).join('')}
+      </div>
+
+      <!-- QR Modal -->
+      <div class="modal-overlay" id="homeQrModal" style="display:none; z-index: 9999;">
+        <div class="modal-content" style="text-align: center;">
+          <h2 id="homeQrTitle">Table X</h2>
+          <p>Scan this code to order from your phone.</p>
+          <div id="homeQrContainer" style="display: flex; justify-content: center; margin: 24px 0;"></div>
+          <button class="btn-secondary" id="closeHomeQrBtn">Close</button>
         </div>
       </div>
     `;
+
+    const orderBtn = document.getElementById('homeOrderBtn');
+    const tableSelection = document.getElementById('homeTableSelection');
+    const initialState = document.getElementById('homeInitialState');
+    const qrModal = document.getElementById('homeQrModal');
+    const qrContainer = document.getElementById('homeQrContainer');
+    const qrTitle = document.getElementById('homeQrTitle');
+
+    if (orderBtn) {
+      orderBtn.addEventListener('click', () => {
+        initialState.style.display = 'none';
+        tableSelection.style.display = 'block';
+      });
+    }
+
+    app.querySelectorAll('.table-select-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const tableNum = e.target.dataset.table;
+        qrTitle.textContent = `Table ${tableNum}`;
+        qrContainer.innerHTML = '';
+        
+        // Use QRGenerator from qr.js
+        const qrEl = document.createElement('div');
+        const url = QRGenerator.getTableURL(tableNum);
+        
+        const typeNumber = 0;
+        const errorCorrectionLevel = 'M';
+        const qr = qrcode(typeNumber, errorCorrectionLevel);
+        qr.addData(url);
+        qr.make();
+        qrEl.innerHTML = qr.createImgTag(5, 10);
+        
+        qrContainer.appendChild(qrEl);
+        qrModal.style.display = 'flex';
+      });
+    });
+
+    document.getElementById('closeHomeQrBtn').addEventListener('click', () => {
+      qrModal.style.display = 'none';
+    });
   }
 
   function handleRoute() {

@@ -111,7 +111,7 @@ const CustomerView = (() => {
 
     gridEl.innerHTML = items.map(item => `
       <div class="menu-card" data-id="${item.id}">
-        <div class="menu-card-emoji">${item.image}</div>
+        <div class="menu-card-image"><img src="${item.image}" alt="${item.name}"></div>
         <div class="menu-card-body">
           <h3 class="menu-item-name">${item.name}</h3>
           <p class="menu-item-desc">${item.description}</p>
@@ -201,7 +201,7 @@ const CustomerView = (() => {
     itemsEl.innerHTML = cart.map(item => `
       <div class="cart-item">
         <div class="cart-item-info">
-          <span class="cart-item-emoji">${item.image}</span>
+          <img src="${item.image}" alt="${item.name}" class="cart-item-image">
           <div>
             <div class="cart-item-name">${item.name}</div>
             <div class="cart-item-price">₹${item.price} × ${item.quantity}</div>

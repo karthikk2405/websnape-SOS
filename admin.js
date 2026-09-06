@@ -205,7 +205,7 @@ const AdminView = (() => {
                 </div>
                 <div class="order-items-list">
                   ${order.items.map(i => `
-                    <div class="order-line">${i.image} ${i.name} × ${i.quantity} <span class="order-line-price">₹${i.price * i.quantity}</span></div>
+                    <div class="order-line"><img src="${i.image}" alt="" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;"> ${i.name} × ${i.quantity} <span class="order-line-price">₹${i.price * i.quantity}</span></div>
                   `).join('')}
                 </div>
                 ${order.notes ? `<div class="order-notes-display">📝 ${order.notes}</div>` : ''}
@@ -281,7 +281,7 @@ const AdminView = (() => {
             <tbody>
               ${menu.map(item => `
                 <tr>
-                  <td class="menu-table-emoji">${item.image}</td>
+                  <td class="menu-table-image"><img src="${item.image}" alt="${item.name}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;"></td>
                   <td>
                     <div class="menu-table-name">${item.name}</div>
                     <div class="menu-table-desc">${item.description}</div>
@@ -332,8 +332,8 @@ const AdminView = (() => {
                 </select>
               </div>
               <div class="form-group">
-                <label>Emoji Icon</label>
-                <input type="text" id="itemEmoji" placeholder="🍔" maxlength="4">
+                <label>Image URL</label>
+                <input type="url" id="itemImage" placeholder="https://..." required>
               </div>
             </div>
             <div class="form-group">
@@ -384,7 +384,7 @@ const AdminView = (() => {
         document.getElementById('itemName').value = item.name;
         document.getElementById('itemPrice').value = item.price;
         document.getElementById('itemCategory').value = item.category;
-        document.getElementById('itemEmoji').value = item.image;
+        document.getElementById('itemImage').value = item.image;
         document.getElementById('itemDescription').value = item.description;
         document.getElementById('menuItemModal').style.display = 'flex';
       });
@@ -403,7 +403,7 @@ const AdminView = (() => {
         name: document.getElementById('itemName').value,
         price: parseFloat(document.getElementById('itemPrice').value),
         category: document.getElementById('itemCategory').value,
-        image: document.getElementById('itemEmoji').value || '🍽️',
+        image: document.getElementById('itemImage').value || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80',
         description: document.getElementById('itemDescription').value,
         available: true,
       };
